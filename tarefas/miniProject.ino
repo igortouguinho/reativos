@@ -7,7 +7,7 @@
 const int buzzer = 11; 
 unsigned long duration = 500;
 unsigned long old;
-unsigned long rightnow;
+unsigned long old1;
 int state = 0;
 int stateLED = 0;
 //Inicializa o sensor nos pinos definidos acima
@@ -16,6 +16,8 @@ Ultrasonic ultrasonic(pino_trigger, pino_echo);
 
 
 void setup() {
+  old = millis();
+  old1 = millis();
   pinMode(4, OUTPUT);
   pinMode(5, OUTPUT);
   pinMode(6, OUTPUT);
@@ -27,37 +29,23 @@ void setup() {
 void loop() {
   //Le as informacoes do sensor, em cm e pol
   unsigned long now = millis();
+  unsigned long now1 = millis();
   float distCM;
   long microsec = ultrasonic.timing();
   distCM = ultrasonic.convert(microsec, Ultrasonic::CM);
   duration = freqAPITO(distCM);
-  
   if (now >= old+duration){
     old = now;
     state = !state;
     apitaBUZZER(state);
-    
-    Serial.print("Distancia em cm: ");
-    Serial.println(distCM);
-
   }
-  rightnow = millis();
-  if(now >= rightnow+25){
-    rightnow = now;
-    stateLED = !stateLED;
-    if (distCM <= 20){
-      piscaLEDS(stateLED); // ARRUMAR LED !!!
+  if (distCM <= 20){
+    if(now1 >= old1+25){
+      old1 = now1;
+      stateLED = !stateLED;
+      piscaLEDS(stateLED);
     }
   }
-//  }else if (distCM < 20){
-//    digitalWrite(4,HIGH);
-//    delay(25);
-//    digitalWrite(4,LOW);
-//    delay(25);
-//  }
-  
-  //Exibe informacoes no serial monitor
- 
 }
 
 void piscaLEDS(int estado){
