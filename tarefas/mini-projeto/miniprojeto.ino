@@ -28,14 +28,12 @@ void loop() {
   duration = intAPITO(distCM);
   if(now >= old +duration){
     old = now;
-    if (distCM < 120 || distCM == 755){
-      if (distCM <= 30){
+    if (distCM < 160 || distCM == 755){
         stateLED = !stateLED;
         piscaLEDS(stateLED);
-      }else{
-        piscaLEDS(LOW);
-      }
-      NewTone(buzzer, 250, 50);
+      NewTone(buzzer, 1000, 50);
+    }else{
+      piscaLEDS(LOW);
     }
   }
 }
@@ -49,7 +47,7 @@ void piscaLEDS(int estado){
 unsigned long intAPITO(float dist){
   unsigned long ret;
   if (dist != 755){
-    ret = dist * 5 + 50;
+    ret = dist * 3 + 50;
     return ret;
   }
 }
