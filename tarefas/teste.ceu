@@ -1,0 +1,119 @@
+#include "c.ceu"
+#include "sdl/sdl.ceu"
+
+var&? SDL_Init sdl =
+    spawn SDL_Init("Joguinho", 640,480, SDL_Color(0xFF,0xFF,0xFF,0xFF));
+
+watching sdl do
+
+    code/await Cloud (var SDL_Rect r, var float vx) -> FOREVER do
+        var float x = -r.w;
+        par do
+            var int dt;
+            every dt in SDL_DT do
+                x = x + vx*dt/1000;
+                if x > 640 then
+                    x = -r.w;
+                end
+            end
+        with
+            every SDL_REDRAW do
+                _SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
+                r.x = x as int;
+                _SDL_RenderFillRect(&&outer.sdl!.ren, (&&r as _SDL_Rect&&));
+            end
+        end
+    end
+
+    code/await Player (void) -> FOREVER do
+        var float x = 640/2 - 20/2;
+        var float y = 480-50;
+        var float vx = 0;
+        var float vy = 0;
+        var SDL_Rect r = val SDL_Rect(0,0, 20,20);
+        var bool pressedUP = false;
+        var int cT = 0;
+        var int lT = 0;
+        par do
+            var int dt;
+            every dt in SDL_DT do
+                x = x + vx*dt/1000;
+                y = y + vy*dt/1000;
+                //_printf("%f\n",y);
+            end
+        with
+            par do
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_LEFT;
+                    vx = -100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_LEFT;
+                    vx = 0;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_RIGHT;
+                    vx = 100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_RIGHT;
+                    vx = 0;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
+                    vy = -100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_UP;
+                    vy = 0;
+                end
+            with
+                loop do
+                    var _SDL_KeyboardEvent&& key;
+                    key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_DOWN;
+                    vy = 100;
+                    key = await SDL_KEYUP   until key:keysym.sym==_SDLK_DOWN;
+                    vy = 0;
+                end
+            end
+        with
+            every SDL_REDRAW do
+                _SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0x00,0x00,0x00,0xFF);
+                r.x = x as int;
+                r.y = y as int;
+                _SDL_RenderFillRect(&&outer.sdl!.ren, (&&r as _SDL_Rect&&));
+            end
+        end
+    end
+
+    native/pre do
+        ##include <time.h>
+    end
+    _srand(_time(null));
+    
+    pool[1] Player player;
+    pool[4] Cloud clouds1;
+    pool[4] Cloud clouds2;
+    pool[4] Cloud clouds3;
+    var int i;
+    var&? Player player1;
+    loop i in [1 -> 4] do
+        var int w = 50 + _rand()%20;
+        var int h = 20 + _rand()%25;
+        var int y = h + _rand()%200;
+        every 1500ms do
+			spawn Cloud(SDL_Rect(0,200,w,h), 350) in clouds1;
+			spawn Cloud(SDL_Rect(0,300,w,h), 250) in clouds2;
+			spawn Cloud(SDL_Rect(0,400,w,h), 100) in clouds3;
+	    end	
+    end
+    loop player1 in [1 -> 1] do
+        spawn Player() in player;
+        if (player.y <=150) then
+            _printf("GANHOU!");
+        end
+    end
+    
+    await FOREVER;
+end
+
+escape 0;
