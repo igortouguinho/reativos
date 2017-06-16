@@ -1,12 +1,13 @@
 #include "c.ceu"
 #include "sdl/sdl.ceu"
 
+
 code/tight FinishHim (var& SDL_Rect rct1) -> bool
 do
 	escape rct1.y <= 70;
 end
 
-code/tight Intersects (var& SDL_Rect rct1, var& SDL_Rect rct2) -> bool
+code/tight Intersects(var& SDL_Rect rct1, var& SDL_Rect rct2) -> bool
 do
     escape rct1.x+rct1.w/2 >= rct2.x-rct2.w/2 and
            rct1.x-rct1.w/2 <= rct2.x+rct2.w/2 and
@@ -16,38 +17,36 @@ do
 end
 
 var&? SDL_Init sdl =
-    spawn SDL_Init("Galinha Atropeladinha", 640,480, SDL_Color(0xFF,0xFF,0xFF,0xFF));
+    spawn SDL_Init("The run over Vader", 640,480, SDL_Color(0xFF,0xFF,0xFF,0xFF));
 
 watching sdl do
-	var& SDL_Open_Image ibagem =
-        spawn SDL_Open_Image(&sdl!.ren, "ibagem.png");
-    code/await Cloud (var int y, var float vx) -> (var SDL_Rect r1, event void go_collided)-> void
-		do
-			r1 = val SDL_Rect(0,y, 70,20);
-		    var float x = -r1.w;
-			par/or do
-            	every go_collided do
-					r1.x = x as int;
-				end
-        	with
-			    var int dt;
-				var int out = _;
-            	do/out
-					every dt in SDL_DT do
-					    x = x + vx*dt/1000;
-					    if x > 640 then
-					        escape/out;
-					    end
+	var& SDL_Open_Image nextlevel = spawn SDL_Open_Image(&sdl!.ren, "nextlevel.png");
+    code/await Cloud (var int y, var float vx) -> (var SDL_Rect r1, event void go_collided, event void go_next_level)-> void do
+		r1 = val SDL_Rect(0,y, 70,20);
+		var float x = -r1.w;
+		par/or do
+			every go_collided do
+				r1.x = x as int;
+			end
+		with
+			var int dt;
+			var int out = _;
+			do/out
+				every dt in SDL_DT do
+					x = x + vx*dt/1000;
+					if x > 640 then
+						escape/out;
 					end
 				end
-			with
-				every SDL_REDRAW do
-				    _SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
-				    r1.x = x as int;
-				    _SDL_RenderFillRect(&&outer.sdl!.ren, (&&r1 as _SDL_Rect&&));
-				end
+			end
+		with
+			every SDL_REDRAW do
+				_SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
+				r1.x = x as int;
+				_SDL_RenderFillRect(&&outer.sdl!.ren, (&&r1 as _SDL_Rect&&));
 			end
 		end
+	end
 
     code/await Player (void) -> (var SDL_Rect r2, event void go_collided) -> void do
         var float x = 640/2 - 20/2;
@@ -60,8 +59,6 @@ watching sdl do
 				x = 640/2 - 20/2;
 				y = 430;
 			end
-		with
-			await go_finish_him;
 		with
 		    var int dt;
 		    every dt in SDL_DT do
@@ -116,11 +113,14 @@ watching sdl do
         ##include <time.h>
     end
     _srand(_time(null));
-	pool[1] Player players;
-	pool[] Cloud clouds;
-	spawn Player() in players;
+	
+	event void go_finish_him;
+	event void go_next_level;
 	par do
 		loop do
+			pool[1] Player players;
+			pool[] Cloud clouds;
+			spawn Player() in players;
 			par do
 				var int i;
 				loop i in [1 -> 4] do
@@ -135,32 +135,43 @@ watching sdl do
 				end
 			with
 				every SDL_DT do 
-			        var&? Player p1;
-			        loop p1 in players do
-			            var&? Cloud c1;
-			            loop c1 in clouds do
-			                if (&&p1!.r2 as usize)<(&&c1!.r1 as usize)
-			                    and (call Intersects(&p1!.r2,&c1!.r1))
-			                then
-			                    emit p1!.go_collided;
-			                    emit c1!.go_collided;
-			                end
-			            end
-			        end
-			    end
+					var&? Player p1;
+					loop p1 in players do
+						var&? Cloud c1;
+						loop c1 in clouds do
+							if (&&p1!.r2 as usize)<(&&c1!.r1 as usize)
+								and (call Intersects(&p1!.r2,&c1!.r1))
+							then
+								emit p1!.go_collided;
+								emit c1!.go_collided;
+							end
+						end
+					end
+				end
 			with
 				every SDL_DT do 
-			        var&? Player p2;
-			        loop p2 in players do
-						if (call FinishHim(&p2!.r2)) then
-							emit p2!.go_finish_him;
+					var&? Player p1;
+					loop p1 in players do
+						if (call FinishHim(&p1!.r2)) then
+							emit go_finish_him;
 						end
 					end
 				end
 			end
 		end
+	with
+		await go_finish_him;
+		_SDL_RenderClear(&&sdl!.ren);
+		par/or do
+			var SDL_Rect rct = val SDL_Rect(0,0,640,480);
+			every SDL_REDRAW do
+				_SDL_RenderCopy(&&sdl!.ren, &&nextlevel.tex.tex, null, &&rct as _SDL_Rect&&);
+			end
+		with
+			var _SDL_KeyboardEvent&& key1 = await SDL_KEYDOWN until key1:keysym.sym==_SDLK_p;
+			emit go_next_level;
+		end
 	end
-	await FOREVER;
 end
 
 escape 0;
