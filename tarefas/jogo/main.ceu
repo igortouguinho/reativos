@@ -1,0 +1,255 @@
+#include "c.ceu"
+#include "sdl/sdl.ceu"
+//Checando fim do nível
+code/tight FinishHim (var& SDL_Rect rct1) -> bool
+do
+	escape rct1.y <= 30 and rct1.x >= 289 and rct1.x <= 352;
+end
+//Fim checagem
+//Checando colisão
+code/tight Intersects(var& SDL_Rect rct1, var& SDL_Rect rct2) -> bool
+do
+    escape rct1.x+rct1.w/2 >= rct2.x-rct2.w/2 and
+           rct1.x-rct1.w/2 <= rct2.x+rct2.w/2 and
+           rct1.y+rct1.h/2 >= rct2.y-rct2.h/2 and
+           rct1.y-rct1.h/2 <= rct2.y+rct2.h/2;
+		
+end
+//Fim checagem
+var&? SDL_Init sdl = spawn SDL_Init("Hey, not too rough.", 640,480, SDL_Color(0xFF,0xFF,0xFF,0xFF));
+
+watching sdl do
+	//Criação das imagens e textos
+	var& SDL_Open_Font font = spawn SDL_Open_Font("res/AmazDooMLeft.ttf", 30);
+	var& SDL_New_Text txtN1 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 1", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN2 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 2", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN3 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 3", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN4 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 4", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN5 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 5", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_Open_Image demo1 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo1.png");
+	var& SDL_Open_Image demo2 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo2.png");
+	var& SDL_Open_Image demo3 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo3.png");
+	var& SDL_Open_Image demo4 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo4.png");
+	var& SDL_Open_Image demo5 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo5.png");
+	var& SDL_Open_Image jog1 = spawn SDL_Open_Image(&sdl!.ren, "res/player.png");
+	var& SDL_Open_Image nextlevel = spawn SDL_Open_Image(&sdl!.ren, "res/nextlevel.png");
+	var& SDL_Open_Image endofgame = spawn SDL_Open_Image(&sdl!.ren, "res/endofgame.png");
+	var& SDL_Open_Image bg1 = spawn SDL_Open_Image(&sdl!.ren, "res/background.png");
+	//Fim da criação
+	//Criação BackGround
+	code/await BackGround (void) -> (var SDL_Rect rct) -> FOREVER do
+		rct = val SDL_Rect(0,0, 640,480);
+		loop do
+			every SDL_REDRAW do
+			     _SDL_RenderCopy(&&outer.sdl!.ren, &&outer.bg1.tex.tex, null,&&rct as _SDL_Rect&&);
+			end
+		end
+	end
+	//Fim da criação
+	//Criação dos inimigos
+    code/await Enemy (var int y, var float vx, var int lvl) -> (var SDL_Rect r1, event void go_collided, event void go_next_level)-> void do
+		r1 = val SDL_Rect(0,y, 50,50);
+		var float x = -r1.w;
+		par/or do
+			every go_collided do
+				r1.x = x as int;
+			end
+		with
+			var int dt;
+			var int out = _;
+			do/out
+				every dt in SDL_DT do
+					x = x + vx*dt/1000;
+					if x > 640 then
+						escape/out;
+					end
+				end
+			end
+		with
+			every SDL_REDRAW do
+				if (lvl == 1) then
+					r1.x = x as int;
+					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN1.tex.width, outer.txtN1.tex.height);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN1.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo1.tex.tex, null,&&r1 as _SDL_Rect&&);
+				end
+				if (lvl == 2) then
+					r1.x = x as int;
+					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN2.tex.width, outer.txtN2.tex.height);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN2.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo2.tex.tex, null,&&r1 as _SDL_Rect&&);
+				end
+				if (lvl == 3) then
+					r1.x = x as int;
+					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN3.tex.width, outer.txtN3.tex.height);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN3.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo3.tex.tex, null,&&r1 as _SDL_Rect&&);
+				end
+				if (lvl == 4) then
+					r1.x = x as int;var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN4.tex.width, outer.txtN4.tex.height);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN4.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo4.tex.tex, null,&&r1 as _SDL_Rect&&);
+				end
+				if (lvl == 5) then
+					r1.x = x as int;
+					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN5.tex.width, outer.txtN5.tex.height);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN5.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo5.tex.tex, null,&&r1 as _SDL_Rect&&);
+				end
+			end
+			
+		end
+	end
+	//Fim da criação
+	//Criação do player
+    code/await Player (void) -> (var SDL_Rect r2, event void go_collided) -> void do
+        var float x = 640/2 - 20/2;
+		var float y = 443;
+        var float vx = 0;
+        var float vy = 0;
+        r2 = val SDL_Rect(0,0, 30,37);
+		par/or do
+			every go_collided do
+				x = 640/2 - 20/2;
+				y = 430;
+			end
+		with
+		    var int dt;
+		    every dt in SDL_DT do
+		        x = x + vx*dt/1000;
+		        y = y + vy*dt/1000;
+		    end
+		with
+		    par do
+		        loop do
+		            var _SDL_KeyboardEvent&& key;
+		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_LEFT;
+		            vx = -150;
+		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_LEFT;
+		            vx = 0;
+		        end
+		    with
+		        loop do
+		            var _SDL_KeyboardEvent&& key;
+		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_RIGHT;
+		            vx = 150;
+		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_RIGHT;
+		            vx = 0;
+		        end
+		    with
+		        loop do
+		            var _SDL_KeyboardEvent&& key;
+		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
+		            vy = -150;
+		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_UP;
+		            vy = 0;
+		        end
+		    with
+		        loop do
+		            var _SDL_KeyboardEvent&& key;
+		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_DOWN;
+		            vy = 150;
+		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_DOWN;
+		            vy = 0;
+		        end
+		    end
+		with
+		    every SDL_REDRAW do
+		        r2.x = x as int;
+		        r2.y = y as int;
+				_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.jog1.tex.tex, null,&&r2 as _SDL_Rect&&);
+		    end
+		end
+	end
+	//Fim da criação
+	
+    native/pre do
+        ##include <time.h>
+    end
+    _srand(_time(null));
+	
+	event void go_finish_him;
+	event void go_next_level;
+	event void end_of_game;
+	//Nivel
+	var int lvl = 1;
+	//Velocidade Spawn
+	var int spdt = 900;
+	spawn BackGround();
+	loop do
+		await 1ms;
+		par/or do
+			loop do
+				pool[1] Player players;
+				pool[] Enemy enemys;
+				spawn Player() in players;
+				par do
+					var int i;
+					loop i in [1 -> 4] do
+						every (spdt)ms do
+							spawn Enemy(75, 450,lvl) in enemys;
+							spawn Enemy(225, 750,lvl) in enemys;
+							spawn Enemy(375, 1050,lvl) in enemys;
+						end
+					end
+				with
+					every SDL_DT do 
+						var&? Player p1;
+						loop p1 in players do
+							var&? Enemy e1;
+							loop e1 in enemys do
+								if (&&p1!.r2 as usize)<(&&e1!.r1 as usize)
+									and (call Intersects(&p1!.r2,&e1!.r1))
+								then
+									emit p1!.go_collided;
+									emit e1!.go_collided;
+								end
+							end
+						end
+					end
+				with
+					every SDL_DT do 
+						var&? Player p1;
+						loop p1 in players do
+							if (call FinishHim(&p1!.r2)) and (lvl == 5) then
+								emit end_of_game;
+							end
+							if (call FinishHim(&p1!.r2)) then
+								emit go_finish_him;
+							end
+						end
+					end
+				end
+			end
+		with
+			await 1s;
+			await go_finish_him;
+			_SDL_RenderClear(&&sdl!.ren);
+			par/or do
+				var SDL_Rect rct = val SDL_Rect(0,0,640,480);
+				every SDL_REDRAW do
+					_SDL_RenderCopy(&&sdl!.ren, &&nextlevel.tex.tex, null, &&rct as _SDL_Rect&&);
+				end
+			with
+				var _SDL_KeyboardEvent&& key1 = await SDL_KEYDOWN until key1:keysym.sym==_SDLK_p;
+				emit go_next_level;
+			end
+		with
+			await go_next_level;
+			spdt = spdt - 100;
+			lvl = lvl + 1;
+		with
+			await end_of_game;
+			par/or do
+				var SDL_Rect rct = val SDL_Rect(0,0,640,480);
+				every SDL_REDRAW do
+					_SDL_RenderCopy(&&sdl!.ren, &&endofgame.tex.tex, null, &&rct as _SDL_Rect&&);
+				end
+			with
+				var _SDL_KeyboardEvent&& key1 = await SDL_KEYDOWN until key1:keysym.sym==_SDLK_ESCAPE;
+				break;
+			end
+		end
+	end
+end
+escape 0;
