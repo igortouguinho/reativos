@@ -1,7 +1,6 @@
 # Projeto Final SDL/Arduino
 
-O projeto será baseado no jogo *Space Invaders* seguindo o padrão do mini projeto SDL tendo integração com um joystick do arduino que
-cuidará da movimentação do personagem dentro do cenário do jogo.
+O projeto será baseado no jogo *Frogger* seguindo o padrão do mini projeto SDL tendo integração com um joystick do arduino e um botão que cuidarão da movimentação do personagem dentro do cenário do jogo e do tiro que o personagem poderá disparar.
 
 **Materiais utilizados:**
  * Arduino 
