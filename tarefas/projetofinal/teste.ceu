@@ -1,0 +1,65 @@
+#include "c.ceu"
+#include "sdl/sdl.ceu"
+
+#define LARGURA_JANELA 640
+#define ALTURA_JANELA 480
+
+#define BRANCO 0xFF,0xFF,0xFF,0xFF
+
+native/pre do
+    ##include <unistd.h>
+    ##include <fcntl.h>
+end
+
+input byte SERIAL;
+
+var&? SDL_Init sdl =
+    spawn SDL_Init("Sugar man", LARGURA_JANELA, ALTURA_JANELA, SDL_Color(BRANCO));
+
+watching sdl do
+    loop do       
+       
+        par do
+            var int lastserial = 0;
+            loop do
+                var byte c = await SERIAL;
+                if(c != lastserial) then
+                    lastserial = c;
+                end
+            end
+            _printf("FINISHED reacting\n");
+        with
+            var byte c = 63;
+            var int h = 0;
+            await async (h,c) do
+                native _open;
+                native _fscanf;
+                native _fcntl;
+                native/nohold _read;
+                native _O_RDONLY;
+                native _O_NONBLOCK;
+                native _F_GETFL;
+                native _F_SETFL;
+
+                var int fd = _open("/dev/ttyACM0", _O_RDONLY);
+                var int flags = _fcntl(fd,_F_GETFL,0);
+                var int leu = _fcntl(fd, _F_SETFL, flags | _O_NONBLOCK);
+                if(leu != 0)  then
+                    _printf("ERROR NO CONTROLLER\n");
+                else
+                    _printf("Joystick ON\n");
+                    loop do
+                        var int ret = _read(fd,&&c,1);
+                        if ret == 0 then
+		                    _printf("%d\n", c);
+		                    emit SERIAL(c);
+                        end
+                    end
+                end
+            end
+            _printf("FINISHED reading\n");
+        end
+
+    end
+    await FOREVER;   
+end
