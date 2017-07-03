@@ -18,6 +18,38 @@ end
 //Fim checagem
 var&? SDL_Init sdl = spawn SDL_Init("Hey, not too rough.", 640,480, SDL_Color(0xFF,0xFF,0xFF,0xFF));
 
+input byte SERIAL;
+spawn do
+	var byte c = 63;
+	var int h = 0;
+	await async (h,c) do
+		native _open;
+		native _fscanf;
+		native _fcntl;
+		native/nohold _read;
+		native _O_RDONLY;
+		native _O_NONBLOCK;
+		native _F_GETFL;
+		native _F_SETFL;
+
+		var int fd = _open("/dev/ttyACM0", _O_RDONLY);
+		var int flags = _fcntl(fd,_F_GETFL,0);
+		var int leu = _fcntl(fd, _F_SETFL, flags | _O_NONBLOCK);
+		if(leu != 0)  then
+			_printf("ERROR NO CONTROLLER\n");
+		else
+			_printf("Joystick ON\n");
+			loop do
+				var int ret = _read(fd,&&c,1);
+				if ret == 0 then
+					_printf("%d\n", c);
+					emit SERIAL(c);
+				end
+			end
+		end
+	end
+end
+
 watching sdl do
 	//Criação das imagens e textos
 	var& SDL_Open_Font font = spawn SDL_Open_Font("res/AmazDooMLeft.ttf", 30);
@@ -120,39 +152,46 @@ watching sdl do
 		        y = y + vy*dt/1000;
 		    end
 		with
-		    par do
-		        loop do
-		            var _SDL_KeyboardEvent&& key;
-		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_LEFT;
-		            vx = -150;
-		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_LEFT;
-		            vx = 0;
-		        end
-		    with
-		        loop do
-		            var _SDL_KeyboardEvent&& key;
-		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_RIGHT;
-		            vx = 150;
-		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_RIGHT;
-		            vx = 0;
-		        end
-		    with
-		        loop do
-		            var _SDL_KeyboardEvent&& key;
-		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_UP;
-		            vy = -150;
-		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_UP;
-		            vy = 0;
-		        end
-		    with
-		        loop do
-		            var _SDL_KeyboardEvent&& key;
-		            key = await SDL_KEYDOWN until key:keysym.sym==_SDLK_DOWN;
-		            vy = 150;
-		            key = await SDL_KEYUP   until key:keysym.sym==_SDLK_DOWN;
-		            vy = 0;
-		        end
-		    end
+				var int lastserial = 0;
+				loop do
+					var byte c = await SERIAL;
+					if(c != lastserial) then
+						lastserial = c;
+					end
+					if (c == 83) then
+						vx = 0;
+						vy = 0;
+					end
+					if (c == 87) then
+						vy = -150;
+					end
+					if (c == 68) then
+						vx = 150;
+					end
+					if (c == 88) then
+						vy = 150;
+					end
+					if (c == 65) then
+						vx = -150;
+					end
+					if (c == 81) then
+						vy = -150;
+						vx = -150;
+					end
+					if (c == 69) then
+						vy = -150;
+						vx = 150;
+					end
+					if (c == 67) then
+						vy = 150;
+						vx = 150;
+					end
+					if (c == 90) then
+						vy = 150;
+						vx = -150;
+					end
+				end
+				_printf("FINISHED reacting\n");
 		with
 		    every SDL_REDRAW do
 		        r2.x = x as int;
@@ -173,6 +212,7 @@ watching sdl do
 	event void go_finish_him;
 	event void go_next_level;
 	event void end_of_game;
+
 	//Nivel
 	var int lvl = 1;
 	//Velocidade Spawn
@@ -221,45 +261,6 @@ watching sdl do
 							end
 						end
 					end
-				with
-					var int lastserial = 0;
-					loop do
-						var byte c = await SERIAL;
-						if(c != lastserial) then
-							lastserial = c;
-						end
-					end
-					_printf("FINISHED reacting\n");
-				with
-					var byte c = 63;
-					var int h = 0;
-					await async (h,c) do
-						native _open;
-						native _fscanf;
-						native _fcntl;
-						native/nohold _read;
-						native _O_RDONLY;
-						native _O_NONBLOCK;
-						native _F_GETFL;
-						native _F_SETFL;
-
-						var int fd = _open("/dev/ttyACM0", _O_RDONLY);
-						var int flags = _fcntl(fd,_F_GETFL,0);
-						var int leu = _fcntl(fd, _F_SETFL, flags | _O_NONBLOCK);
-						if(leu != 0)  then
-							_printf("ERROR NO CONTROLLER\n");
-						else
-							_printf("Joystick ON\n");
-							loop do
-								var int ret = _read(fd,&&c,1);
-								if ret == 0 then
-									_printf("%d\n", c);
-									emit SERIAL(c);
-								end
-							end
-						end
-					end
-					_printf("FINISHED reading\n");
 				end
 			end
 		with
