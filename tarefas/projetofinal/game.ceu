@@ -78,14 +78,37 @@ watching sdl do
 		end
 	end
 	//Fim da criação
+	
+	code/await Bullet (var float y, var float x) -> (var SDL_Rect rct, event void head_shot) -> void do
+		rct = val SDL_Rect(0,0, 5,10);
+		var float vy = -50;
+		par/or do
+			await head_shot;
+		with
+			par do
+				var int dt;
+				every dt in SDL_DT do
+					y = y + vy*dt/1000;
+				end
+			with
+				every SDL_REDRAW do
+					_SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
+		            rct.y = y as int;
+		            _SDL_RenderFillRect(&&outer.sdl!.ren, (&&rct as _SDL_Rect&&));
+		        end 	
+		    end
+	    end
+	end	
 	//Criação dos inimigos
-    code/await Enemy (var int y, var float vx, var int lvl) -> (var SDL_Rect r1, event void go_collided, event void go_next_level)-> void do
+    code/await Enemy (var int y, var float vx, var int lvl) -> (var SDL_Rect r1, event void go_collided, event void go_next_level, event void head_shot)-> void do
 		r1 = val SDL_Rect(0,y, 50,50);
 		var float x = -r1.w;
 		par/or do
 			every go_collided do
 				r1.x = x as int;
 			end
+		with
+			await head_shot;
 		with
 			var int dt;
 			var int out = _;
@@ -218,12 +241,14 @@ watching sdl do
 	//Velocidade Spawn
 	var int spdt = 900;
 	spawn BackGround();
+	spawn Bullet(443,640/2 - 20/2);
 	loop do
 		await 1ms;
 		par/or do
 			loop do
 				pool[1] Player players;
 				pool[] Enemy enemys;
+				pool[] Bullet bullets;
 				spawn Player() in players;
 				par do
 					var int i;
@@ -245,6 +270,21 @@ watching sdl do
 								then
 									emit p1!.go_collided;
 									emit e1!.go_collided;
+								end
+							end
+						end
+					end
+				with
+					every SDL_DT do 
+						var&? Bullet blt;
+						loop blt in bullets do
+							var&? Enemy e1;
+							loop e1 in enemys do
+								if (&&blt!.rct as usize)<(&&e1!.r1 as usize)
+									and (call Intersects(&blt!.rct,&e1!.r1))
+								then
+									emit blt!.head_shot;
+									emit e1!.head_shot;
 								end
 							end
 						end
