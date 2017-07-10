@@ -79,21 +79,24 @@ watching sdl do
 	end
 	//Fim da criação
 	
-	code/await Bullet (var float y, var float x) -> (var SDL_Rect rct, event void head_shot) -> void do
-		rct = val SDL_Rect(0,0, 5,10);
-		var float vy = -50;
+	code/await Bullet (var float x, var float y) -> (var SDL_Rect rct, event void head_shot) -> void do
+		rct = val SDL_Rect(0,0, 10,5);
+		var float vx = -80;
 		par/or do
-			await head_shot;
+			every head_shot do
+                _printf("HITHITHITHITHITHITHITHITHITHITHITHIT\n");
+            end
 		with
 			par do
 				var int dt;
 				every dt in SDL_DT do
-					y = y + vy*dt/1000;
+					x = x + vx*dt/1000;
 				end
 			with
 				every SDL_REDRAW do
 					_SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
 		            rct.y = y as int;
+                    rct.x = x as int;
 		            _SDL_RenderFillRect(&&outer.sdl!.ren, (&&rct as _SDL_Rect&&));
 		        end 	
 		    end
@@ -169,59 +172,61 @@ watching sdl do
 				y = 430;
 			end
 		with
-		    var int dt;
-		    every dt in SDL_DT do
-		        x = x + vx*dt/1000;
-		        y = y + vy*dt/1000;
+            par do
+		        var int dt;
+		        every dt in SDL_DT do
+		            x = x + vx*dt/1000;
+		            y = y + vy*dt/1000;
+		        end
+		    with
+			    var int lastserial = 0;
+			    loop do
+				    var byte c = await SERIAL;
+				    if(c != lastserial) then
+					    lastserial = c;
+				    end
+				    if (c == 83) then
+					    vx = 0;
+					    vy = 0;
+				    end
+				    if (c == 87) then
+					    vy = -150;
+				    end
+				    if (c == 68) then
+					    vx = 150;
+				    end
+				    if (c == 88) then
+					    vy = 150;
+				    end
+				    if (c == 65) then
+					    vx = -150;
+				    end
+				    if (c == 81) then
+					    vy = -150;
+					    vx = -150;
+				    end
+				    if (c == 69) then
+					    vy = -150;
+					    vx = 150;
+				    end
+				    if (c == 67) then
+					    vy = 150;
+					    vx = 150;
+				    end
+				    if (c == 90) then
+					    vy = 150;
+					    vx = -150;
+				    end
+			    end
+			    _printf("FINISHED reacting\n");
+		    with
+		        every SDL_REDRAW do
+		            r2.x = x as int;
+		            r2.y = y as int;
+				    _SDL_RenderCopy(&&outer.sdl!.ren, &&outer.jog1.tex.tex, null,&&r2 as _SDL_Rect&&);
+		        end
 		    end
-		with
-				var int lastserial = 0;
-				loop do
-					var byte c = await SERIAL;
-					if(c != lastserial) then
-						lastserial = c;
-					end
-					if (c == 83) then
-						vx = 0;
-						vy = 0;
-					end
-					if (c == 87) then
-						vy = -150;
-					end
-					if (c == 68) then
-						vx = 150;
-					end
-					if (c == 88) then
-						vy = 150;
-					end
-					if (c == 65) then
-						vx = -150;
-					end
-					if (c == 81) then
-						vy = -150;
-						vx = -150;
-					end
-					if (c == 69) then
-						vy = -150;
-						vx = 150;
-					end
-					if (c == 67) then
-						vy = 150;
-						vx = 150;
-					end
-					if (c == 90) then
-						vy = 150;
-						vx = -150;
-					end
-				end
-				_printf("FINISHED reacting\n");
-		with
-		    every SDL_REDRAW do
-		        r2.x = x as int;
-		        r2.y = y as int;
-				_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.jog1.tex.tex, null,&&r2 as _SDL_Rect&&);
-		    end
-		end
+        end
 	end
 	//Fim da criação
 	
@@ -241,14 +246,13 @@ watching sdl do
 	//Velocidade Spawn
 	var int spdt = 900;
 	spawn BackGround();
-	spawn Bullet(443,640/2 - 20/2);
 	loop do
 		await 1ms;
 		par/or do
 			loop do
+                pool[] Bullet bullets;
 				pool[1] Player players;
 				pool[] Enemy enemys;
-				pool[] Bullet bullets;
 				spawn Player() in players;
 				par do
 					var int i;
@@ -275,16 +279,17 @@ watching sdl do
 						end
 					end
 				with
-					every SDL_DT do 
+					every SDL_DT do
 						var&? Bullet blt;
 						loop blt in bullets do
-							var&? Enemy e1;
-							loop e1 in enemys do
-								if (&&blt!.rct as usize)<(&&e1!.r1 as usize)
-									and (call Intersects(&blt!.rct,&e1!.r1))
+							var&? Enemy e2;
+							loop e2 in enemys do
+                                
+								if (&&blt!.rct as usize)<(&&e2!.r1 as usize)
+									and (call Intersects(&blt!.rct,&e2!.r1))
 								then
 									emit blt!.head_shot;
-									emit e1!.head_shot;
+									emit e2!.head_shot;
 								end
 							end
 						end
@@ -301,6 +306,13 @@ watching sdl do
 							end
 						end
 					end
+                with
+                    var&? Player p1;
+					loop p1 in players do
+                        every 500ms do
+                            spawn Bullet(p1!.r2.x,p1!.r2.y) in bullets;
+                        end
+                    end
 				end
 			end
 		with
