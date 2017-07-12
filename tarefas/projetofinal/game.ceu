@@ -53,39 +53,37 @@ end
 watching sdl do
 	//Criação das imagens e textos
 	var& SDL_Open_Font font = spawn SDL_Open_Font("res/AmazDooMLeft.ttf", 30);
-	var& SDL_New_Text txtN1 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 1", SDL_Color(0x00,0x00,0x00,0xFF));
-	var& SDL_New_Text txtN2 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 2", SDL_Color(0x00,0x00,0x00,0xFF));
-	var& SDL_New_Text txtN3 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 3", SDL_Color(0x00,0x00,0x00,0xFF));
-	var& SDL_New_Text txtN4 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 4", SDL_Color(0x00,0x00,0x00,0xFF));
-	var& SDL_New_Text txtN5 = spawn SDL_New_Text(&sdl!.ren, &font.font, "Level: 5", SDL_Color(0x00,0x00,0x00,0xFF));
-	var& SDL_Open_Image demo1 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo1.png");
-	var& SDL_Open_Image demo2 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo2.png");
-	var& SDL_Open_Image demo3 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo3.png");
-	var& SDL_Open_Image demo4 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo4.png");
-	var& SDL_Open_Image demo5 =  spawn SDL_Open_Image(&sdl!.ren, "res/demo5.png");
-	var& SDL_Open_Image jog1 = spawn SDL_Open_Image(&sdl!.ren, "res/player.png");
-	var& SDL_Open_Image nextlevel = spawn SDL_Open_Image(&sdl!.ren, "res/nextlevel.png");
-	var& SDL_Open_Image endofgame = spawn SDL_Open_Image(&sdl!.ren, "res/endofgame.png");
-	var& SDL_Open_Image bg1 = spawn SDL_Open_Image(&sdl!.ren, "res/background.png");
+	var& SDL_New_Text txtN1 = spawn SDL_New_Text(&sdl.ren, &font.font, "Level: 1", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN2 = spawn SDL_New_Text(&sdl.ren, &font.font, "Level: 2", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN3 = spawn SDL_New_Text(&sdl.ren, &font.font, "Level: 3", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN4 = spawn SDL_New_Text(&sdl.ren, &font.font, "Level: 4", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_New_Text txtN5 = spawn SDL_New_Text(&sdl.ren, &font.font, "Level: 5", SDL_Color(0x00,0x00,0x00,0xFF));
+	var& SDL_Open_Image demo1 =  spawn SDL_Open_Image(&sdl.ren, "res/demo1.png");
+	var& SDL_Open_Image demo2 =  spawn SDL_Open_Image(&sdl.ren, "res/demo2.png");
+	var& SDL_Open_Image demo3 =  spawn SDL_Open_Image(&sdl.ren, "res/demo3.png");
+	var& SDL_Open_Image demo4 =  spawn SDL_Open_Image(&sdl.ren, "res/demo4.png");
+	var& SDL_Open_Image demo5 =  spawn SDL_Open_Image(&sdl.ren, "res/demo5.png");
+	var& SDL_Open_Image jog1 = spawn SDL_Open_Image(&sdl.ren, "res/player.png");
+	var& SDL_Open_Image nextlevel = spawn SDL_Open_Image(&sdl.ren, "res/nextlevel.png");
+	var& SDL_Open_Image endofgame = spawn SDL_Open_Image(&sdl.ren, "res/endofgame.png");
+	var& SDL_Open_Image bg1 = spawn SDL_Open_Image(&sdl.ren, "res/background.png");
 	//Fim da criação
 	//Criação BackGround
 	code/await BackGround (void) -> (var SDL_Rect rct) -> FOREVER do
 		rct = val SDL_Rect(0,0, 640,480);
 		loop do
 			every SDL_REDRAW do
-			     _SDL_RenderCopy(&&outer.sdl!.ren, &&outer.bg1.tex.tex, null,&&rct as _SDL_Rect&&);
+			     _SDL_RenderCopy(&&outer.sdl.ren, &&outer.bg1.tex.tex, null,&&rct as _SDL_Rect&&);
 			end
 		end
 	end
 	//Fim da criação
 	
 	code/await Bullet (var float x, var float y) -> (var SDL_Rect rct, event void head_shot) -> void do
-		rct = val SDL_Rect(0,0, 10,5);
-		var float vx = -80;
+		rct = val SDL_Rect(0,0, 5,3);
+		var float vx = -240;
 		par/or do
-			every head_shot do
-                _printf("HITHITHITHITHITHITHITHITHITHITHITHIT\n");
-            end
+			await head_shot;
 		with
 			par do
 				var int dt;
@@ -94,10 +92,10 @@ watching sdl do
 				end
 			with
 				every SDL_REDRAW do
-					_SDL_SetRenderDrawColor(&&outer.sdl!.ren, 0xDD,0xDD,0xDD,0xFF);
+					_SDL_SetRenderDrawColor(&&outer.sdl.ren, 255,189,50,0xFF);
 		            rct.y = y as int;
                     rct.x = x as int;
-		            _SDL_RenderFillRect(&&outer.sdl!.ren, (&&rct as _SDL_Rect&&));
+		            _SDL_RenderFillRect(&&outer.sdl.ren, (&&rct as _SDL_Rect&&));
 		        end 	
 		    end
 	    end
@@ -128,31 +126,31 @@ watching sdl do
 				if (lvl == 1) then
 					r1.x = x as int;
 					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN1.tex.width, outer.txtN1.tex.height);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN1.tex.tex, null, &&rect as _SDL_Rect&&);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo1.tex.tex, null,&&r1 as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.txtN1.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.demo1.tex.tex, null,&&r1 as _SDL_Rect&&);
 				end
 				if (lvl == 2) then
 					r1.x = x as int;
 					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN2.tex.width, outer.txtN2.tex.height);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN2.tex.tex, null, &&rect as _SDL_Rect&&);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo2.tex.tex, null,&&r1 as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.txtN2.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.demo2.tex.tex, null,&&r1 as _SDL_Rect&&);
 				end
 				if (lvl == 3) then
 					r1.x = x as int;
 					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN3.tex.width, outer.txtN3.tex.height);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN3.tex.tex, null, &&rect as _SDL_Rect&&);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo3.tex.tex, null,&&r1 as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.txtN3.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.demo3.tex.tex, null,&&r1 as _SDL_Rect&&);
 				end
 				if (lvl == 4) then
 					r1.x = x as int;var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN4.tex.width, outer.txtN4.tex.height);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN4.tex.tex, null, &&rect as _SDL_Rect&&);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo4.tex.tex, null,&&r1 as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.txtN4.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.demo4.tex.tex, null,&&r1 as _SDL_Rect&&);
 				end
 				if (lvl == 5) then
 					r1.x = x as int;
 					var SDL_Rect rect = val SDL_Rect(550, 10, outer.txtN5.tex.width, outer.txtN5.tex.height);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.txtN5.tex.tex, null, &&rect as _SDL_Rect&&);
-					_SDL_RenderCopy(&&outer.sdl!.ren, &&outer.demo5.tex.tex, null,&&r1 as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.txtN5.tex.tex, null, &&rect as _SDL_Rect&&);
+					_SDL_RenderCopy(&&outer.sdl.ren, &&outer.demo5.tex.tex, null,&&r1 as _SDL_Rect&&);
 				end
 			end
 			
@@ -175,8 +173,21 @@ watching sdl do
             par do
 		        var int dt;
 		        every dt in SDL_DT do
-		            x = x + vx*dt/1000;
-		            y = y + vy*dt/1000;
+		        	if ( x>=0 and x<=610) then
+		            	x = x + vx*dt/1000;
+		            else/if (x<=0) then
+		            	x = 1;
+		            else
+		            	x = 609;
+		            end
+		            
+		            if ( y>=0 and y<=443) then
+			            y = y + vy*dt/1000;
+			        else/if (y<=0) then
+		            	y = 1;
+		            else
+		            	y = 442;
+		            end
 		        end
 		    with
 			    var int lastserial = 0;
@@ -223,7 +234,7 @@ watching sdl do
 		        every SDL_REDRAW do
 		            r2.x = x as int;
 		            r2.y = y as int;
-				    _SDL_RenderCopy(&&outer.sdl!.ren, &&outer.jog1.tex.tex, null,&&r2 as _SDL_Rect&&);
+				    _SDL_RenderCopy(&&outer.sdl.ren, &&outer.jog1.tex.tex, null,&&r2 as _SDL_Rect&&);
 		        end
 		    end
         end
@@ -261,6 +272,22 @@ watching sdl do
 							spawn Enemy(75, 450,lvl) in enemys;
 							spawn Enemy(225, 750,lvl) in enemys;
 							spawn Enemy(375, 1050,lvl) in enemys;
+						end
+					end
+				with
+					var int lastserial1 = 0;
+					var int fired = 3;
+					var&? Player p1;
+					loop p1 in players do
+						loop do
+							var byte ch = await SERIAL;
+							if(ch != lastserial1) then
+								lastserial1 = ch;
+							end
+							if (ch == 84 and fired > 0) then
+								spawn Bullet(p1!.r2.x,p1!.r2.y+10) in bullets;
+								fired = fired - 1;
+							end
 						end
 					end
 				with
@@ -306,23 +333,16 @@ watching sdl do
 							end
 						end
 					end
-                with
-                    var&? Player p1;
-					loop p1 in players do
-                        every 500ms do
-                            spawn Bullet(p1!.r2.x,p1!.r2.y) in bullets;
-                        end
-                    end
 				end
 			end
 		with
 			await 1s;
 			await go_finish_him;
-			_SDL_RenderClear(&&sdl!.ren);
+			_SDL_RenderClear(&&sdl.ren);
 			par/or do
 				var SDL_Rect rct = val SDL_Rect(0,0,640,480);
 				every SDL_REDRAW do
-					_SDL_RenderCopy(&&sdl!.ren, &&nextlevel.tex.tex, null, &&rct as _SDL_Rect&&);
+					_SDL_RenderCopy(&&sdl.ren, &&nextlevel.tex.tex, null, &&rct as _SDL_Rect&&);
 				end
 			with
 				var _SDL_KeyboardEvent&& key1 = await SDL_KEYDOWN until key1:keysym.sym==_SDLK_p;
@@ -337,7 +357,7 @@ watching sdl do
 			par/or do
 				var SDL_Rect rct = val SDL_Rect(0,0,640,480);
 				every SDL_REDRAW do
-					_SDL_RenderCopy(&&sdl!.ren, &&endofgame.tex.tex, null, &&rct as _SDL_Rect&&);
+					_SDL_RenderCopy(&&sdl.ren, &&endofgame.tex.tex, null, &&rct as _SDL_Rect&&);
 				end
 			with
 				var _SDL_KeyboardEvent&& key1 = await SDL_KEYDOWN until key1:keysym.sym==_SDLK_ESCAPE;
